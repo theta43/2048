@@ -1,3 +1,7 @@
+/* Copyright (C) 2014 James Smith <james@theta.pw>
+ * See the license.txt file
+ */
+
 #include <err.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -13,10 +17,14 @@
  * All player movements are treated as 'left', so we assign the values in
  * the array to make that possible. (Explained better below)
  */
+
+/* XXX Because of this variable, the 'library' is NOT reentrant.
+ * Move mod to the tile_game struct if you want that.
+ */
 static unsigned int *mod[TILES];
 
-/* Doesn't combine tiles, just removes the zero spaces between any two tiles.
- * operates on a single row
+/*
+ * Removes zero spaces between tiles on a single row.
  */
 static void
 compress_row (size_t row)
@@ -69,7 +77,7 @@ compress_row (size_t row)
  * with a starting value of { 2, 4 }
  */
 static int
-new_tile (struct game *pgame)
+new_tile (struct tile_game *pgame)
 {
 	unsigned char empty[16];
 	size_t i, j, loc;
@@ -98,8 +106,11 @@ new_tile (struct game *pgame)
 	return pgame->tiles[loc];
 }
 
+/*
+ * Creates two initital game tiles.
+ */
 int
-init_tiles (struct game *pgame)
+init_tiles (struct tile_game *pgame)
 {
 	pthread_mutex_init (&pgame->lock, NULL);
 	pthread_mutex_lock (&pgame->lock);
@@ -127,20 +138,20 @@ init_tiles (struct game *pgame)
 }
 
 void
-destroy_tiles (struct game *pgame)
+destroy_tiles (struct tile_game *pgame)
 {
 	pthread_mutex_destroy (&pgame->lock);
 	free (pgame->tiles);
 }
 
 /*
- * Move all tiles in a direction, combining any tiles of the same number
- * And then generating a new random tile in an empty place
- * If no pieces can be moved, and generating a random new piece fails
- * then the game is over
+ * Move all tiles in a direction, combining any tiles of the same number.
+ * Then create a new tile in an empty place.
+ * If no pieces can be moved, and creating a new tile fails,
+ * then the game is over.
  */
 int
-move_tiles (struct game *pgame, enum tile_dir dir)
+move_tiles (struct tile_game *pgame, enum tile_dir dir)
 {
 	if (!pgame || !pgame->tiles) {
 		errx (2, "Must initialize the game first");
@@ -151,7 +162,7 @@ move_tiles (struct game *pgame, enum tile_dir dir)
 	/* Re-align tiles so all operations are 'left' operations
 	 *
 	 * Essentially, we're rotating the matrix by 90^ when moving down,
-	 * and -270^ when moving up. Moving right we flip the matrix over the y
+	 * and -90^ when moving up. Moving right we flip the matrix over the y
 	 * axis.
 	 * Left is the normal, so we keep the tile positions the same
 	 */
@@ -187,17 +198,13 @@ move_tiles (struct game *pgame, enum tile_dir dir)
 		break;
 	}
 
-	/* We only check each tiles once, so ( 2, 2, 2, 2 )
-	 * compresses to ( 4, 0, 2, 2 ), then to ( 4, 2, 2, 0),
-	 * then to ( 4, 4, 0, 0 ).
+	/* We only check each tile once. E.g.
+	 * ( 2, 2, 2, 2 ) -> ( 4, 0, 2, 2 ) ->
+	 * ( 4, 2, 2, 0 ) -> ( 4, 4, 0, 0 ).
 	 */
 	for (int i = 0; i < TILES; i++) {
-
 		compress_row (i/4);
 
-		/* We can't combine across rows.  If we're looking
-		 * at the last tile in a row, nothing can be done.
-		 */
 		if ((i % 4 == 3) || (*mod[i] != *mod[i+1]))
 			continue;
 

@@ -1,4 +1,8 @@
-#ifndef TILE_H
+/* Copyright (C) 2014 James Smith <james@theta.pw>
+ * See the license.txt file
+ */
+
+#ifndef TILE_H_
 #define TILE_H_
 
 #include <pthread.h>
@@ -12,18 +16,18 @@ enum tile_dir {
 	RIGHT,
 };
 
-struct game {
+struct tile_game {
 	pthread_mutex_t lock;
 	unsigned int seedp;
 	unsigned int max_tile;
-	unsigned int moves;
+	unsigned int moves;	/* tiles created */
 	unsigned int score;
 
-	unsigned int *tiles;
+	unsigned int *tiles;	/* array of tiles, TILES long */
 };
 
-int init_tiles (struct game *);
-void destroy_tiles (struct game *);
-int move_tiles (struct game *, enum tile_dir);
+int init_tiles (struct tile_game *);
+int move_tiles (struct tile_game *, enum tile_dir);
+void destroy_tiles (struct tile_game *);
 
-#endif
+#endif /* 2048_TILE_H_ */

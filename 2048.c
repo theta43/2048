@@ -1,3 +1,7 @@
+/* Copyright (C) 2014 James Smith <james@theta.pw>
+ * See the license.txt file
+ */
+
 #include <ctype.h>
 #include <err.h>
 #include <stdbool.h>
@@ -6,7 +10,7 @@
 
 #include "tile.h"
 
-static struct game game;
+static struct tile_game game;
 
 int
 ask_yn (const char *prompt)
@@ -50,7 +54,6 @@ main (void)
 	init_tiles (&game);
 
 	ch = ret = 0;
-
 	do {
 		draw_game ();
 		printf ("move [wasd]: ");
