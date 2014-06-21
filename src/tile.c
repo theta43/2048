@@ -18,9 +18,6 @@
  * the array to make that possible. (Explained better below)
  */
 
-/* XXX Because of this variable, the 'library' is NOT reentrant.
- * Move mod to the tile_game struct if you want that.
- */
 static unsigned int *mod[TILES];
 
 /*
@@ -97,8 +94,6 @@ new_tile (struct tile_game *pgame)
 
 	/* Even distribution of { 2, 4 } */
 	pgame->tiles[loc] = ((rand_r(&pgame->seedp) & 1) +1) * 2;
-
-	pgame->score += pgame->tiles[loc];
 	pgame->moves++;
 
 	pthread_mutex_unlock (&pgame->lock);
